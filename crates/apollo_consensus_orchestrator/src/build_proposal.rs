@@ -249,24 +249,24 @@ async fn get_proposal_content(
                     .to_std()
                     .unwrap_or_default()
                     .max(Duration::from_millis(1)); // Ensure we wait at least 1 ms to avoid immediate timeout. 
-                match tokio::time::timeout(remaining, cende_write_success).await {
-                    Err(_) => {
-                        return Err(BuildProposalError::CendeWriteError(
-                            "Writing blob to Aerospike didn't return in time.".to_string(),
-                        ));
-                    }
-                    Ok(Ok(true)) => {
-                        info!("Writing blob to Aerospike completed successfully.");
-                    }
-                    Ok(Ok(false)) => {
-                        return Err(BuildProposalError::CendeWriteError(
-                            "Writing blob to Aerospike failed.".to_string(),
-                        ));
-                    }
-                    Ok(Err(e)) => {
-                        return Err(BuildProposalError::CendeWriteError(e.to_string()));
-                    }
-                }
+                // match tokio::time::timeout(remaining, cende_write_success).await {
+                //     Err(_) => {
+                //         return Err(BuildProposalError::CendeWriteError(
+                //             "Writing blob to Aerospike didn't return in time.".to_string(),
+                //         ));
+                //     }
+                //     Ok(Ok(true)) => {
+                //         info!("Writing blob to Aerospike completed successfully.");
+                //     }
+                //     Ok(Ok(false)) => {
+                //         return Err(BuildProposalError::CendeWriteError(
+                //             "Writing blob to Aerospike failed.".to_string(),
+                //         ));
+                //     }
+                //     Ok(Err(e)) => {
+                //         return Err(BuildProposalError::CendeWriteError(e.to_string()));
+                //     }
+                // }
 
                 let final_n_executed_txs_u64 = final_n_executed_txs
                     .try_into()
