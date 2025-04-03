@@ -250,6 +250,15 @@ expression: dumped_default_config
     },
     "privacy": "Public"
   },
+  "context.validator_ids": {
+    "description": "The ids of the validators.",
+    "value": {
+      "$serde_json::private::Array": [
+        "0x64"
+      ]
+    }
+    "privacy": "Public"
+  },
   "context.proposal_buffer_size": {
     "description": "The buffer size for streaming outbound proposals.",
     "value": {

@@ -57,6 +57,7 @@ use starknet_api::consensus_transaction::InternalConsensusTransaction;
 use starknet_api::core::SequencerContractAddress;
 use starknet_api::data_availability::L1DataAvailabilityMode;
 use starknet_api::transaction::TransactionHash;
+use starknet_types_core::felt::Felt;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::AbortOnDropHandle;
@@ -177,19 +178,25 @@ pub struct SequencerConsensusContextDeps {
 impl SequencerConsensusContext {
     pub fn new(config: ContextConfig, deps: SequencerConsensusContextDeps) -> Self {
         register_metrics();
-        let num_validators = config.num_validators;
+        // let num_validators = config.num_validators;
         let l1_da_mode = if config.l1_da_mode {
             L1DataAvailabilityMode::Blob
         } else {
             L1DataAvailabilityMode::Calldata
         };
+        let validators = config
+            .validator_ids
+            .iter()
+            .map(|id| {
+                ValidatorId::try_from(Felt::from_hex(id).expect("Invalid hex ID"))
+                    .expect("Invalid ValidatorId")
+            })
+            .collect();
         Self {
             config,
             deps,
             // TODO(Matan): Set the actual validator IDs (contract addresses).
-            validators: (0..num_validators)
-                .map(|i| ValidatorId::from(DEFAULT_VALIDATOR_ID + i))
-                .collect(),
+            validators,
             valid_proposals: Arc::new(Mutex::new(BuiltProposals::new())),
             proposal_id: 0,
             current_height: None,
