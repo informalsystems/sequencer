@@ -199,6 +199,13 @@
     "privacy": "Public",
     "value": 1
   },
+  "context.validator_ids": {
+    "description": "The ids of the validators.",
+    "privacy": "Public",
+    "value": [
+      "0x64"
+    ]
+  },
   "context.proposal_buffer_size": {
     "description": "The buffer size for streaming outbound proposals.",
     "privacy": "Public",

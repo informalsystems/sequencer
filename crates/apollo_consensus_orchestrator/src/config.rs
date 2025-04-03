@@ -5,6 +5,7 @@ use std::time::Duration;
 use apollo_config::converters::deserialize_milliseconds_to_duration;
 use apollo_config::dumping::{ser_param, SerializeConfig};
 use apollo_config::{ParamPath, ParamPrivacyInput, SerializedParam};
+use apollo_protobuf::consensus::DEFAULT_VALIDATOR_ID_STR;
 use serde::{Deserialize, Serialize};
 use starknet_api::core::{ChainId, ContractAddress};
 use validator::Validate;
@@ -19,6 +20,8 @@ pub struct ContextConfig {
     pub proposal_buffer_size: usize,
     /// The number of validators.
     pub num_validators: u64,
+    /// The IDs of the validators.
+    pub validator_ids: Vec<String>,
     /// The chain id of the Starknet chain.
     pub chain_id: ChainId,
     /// Maximum allowed deviation (seconds) of a proposed block's timestamp from the current time.
@@ -67,6 +70,12 @@ impl SerializeConfig for ContextConfig {
                 "num_validators",
                 &self.num_validators,
                 "The number of validators.",
+                ParamPrivacyInput::Public,
+            ),
+            ser_param(
+                "validator_ids",
+                &self.validator_ids,
+                "The IDs of the validators.",
                 ParamPrivacyInput::Public,
             ),
             ser_param(
@@ -154,6 +163,7 @@ impl Default for ContextConfig {
         Self {
             proposal_buffer_size: 100,
             num_validators: 1,
+            validator_ids: vec![DEFAULT_VALIDATOR_ID_STR.to_string()],
             chain_id: ChainId::Mainnet,
             block_timestamp_window_seconds: 1,
             l1_da_mode: true,
