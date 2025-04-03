@@ -130,6 +130,7 @@ impl SerializedContent {
                 }
                 Value::Bool(_) => Some(SerializationType::Boolean),
                 Value::String(_) => Some(SerializationType::String),
+                Value::Array(_) => Some(SerializationType::Array),
                 _ => None,
             },
             SerializedContent::PointerTarget(_) => None,
@@ -166,6 +167,7 @@ pub enum SerializationType {
     NegativeInteger,
     PositiveInteger,
     String,
+    Array,
 }
 
 /// Errors at the configuration dumping and loading process.

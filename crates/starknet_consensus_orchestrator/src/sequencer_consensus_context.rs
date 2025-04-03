@@ -181,7 +181,6 @@ impl SequencerConsensusContext {
         vote_broadcast_client: BroadcastTopicClient<Vote>,
         cende_ambassador: Arc<dyn CendeContext>,
     ) -> Self {
-        let num_validators = config.num_validators;
         let l1_da_mode = if config.l1_da_mode {
             L1DataAvailabilityMode::Blob
         } else {
@@ -197,8 +196,13 @@ impl SequencerConsensusContext {
             outbound_proposal_sender,
             vote_broadcast_client,
             // TODO(Matan): Set the actual validator IDs (contract addresses).
-            validators: (0..num_validators)
-                .map(|i| ValidatorId::from(DEFAULT_VALIDATOR_ID + i))
+            validators: config
+                .validator_ids
+                .iter()
+                .map(|id| {
+                    ValidatorId::try_from(Felt::from_hex(id).expect("Invalid hex ID"))
+                        .expect("Invalid ValidatorId")
+                })
                 .collect(),
             valid_proposals: Arc::new(Mutex::new(HeightToIdToContent::new())),
             proposal_id: 0,

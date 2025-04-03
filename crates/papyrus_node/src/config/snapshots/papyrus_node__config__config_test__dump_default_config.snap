@@ -186,6 +186,15 @@ expression: dumped_default_config
     },
     "privacy": "Public"
   },
+  "context.validator_ids": {
+    "description": "The ids of the validators.",
+    "value": {
+      "$serde_json::private::Array": [
+        "0x64"
+      ]
+    }
+    "privacy": "Public"
+  },
   "monitoring_gateway.collect_metrics": {
     "description": "If true, collect and return metrics in the monitoring gateway.",
     "value": false,

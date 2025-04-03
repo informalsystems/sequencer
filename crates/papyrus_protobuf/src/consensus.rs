@@ -72,6 +72,7 @@ pub struct BlockInfo {
 /// A temporary constant to use as a validator ID. Zero is not a valid contract address.
 // TODO(Matan): Remove this once we have a proper validator set.
 pub const DEFAULT_VALIDATOR_ID: u64 = 100;
+pub const DEFAULT_VALIDATOR_ID_STR: &'static str = "0x64";
 
 impl Default for ProposalInit {
     fn default() -> Self {
