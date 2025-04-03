@@ -200,9 +200,8 @@ impl SequencerConsensusContext {
                 .validator_ids
                 .iter()
                 .map(|id| {
-                    let trimmed = id.trim_start_matches("0x");
-                    let value = u64::from_str_radix(trimmed, 16).expect("Invalid hex ID");
-                    ValidatorId::from(value)
+                    ValidatorId::try_from(Felt::from_hex(id).expect("Invalid hex ID"))
+                        .expect("Invalid ValidatorId")
                 })
                 .collect(),
             valid_proposals: Arc::new(Mutex::new(HeightToIdToContent::new())),
