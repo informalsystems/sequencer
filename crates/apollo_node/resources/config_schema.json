@@ -1414,6 +1414,13 @@
     "privacy": "Public",
     "value": 1
   },
+  "consensus_manager_config.context_config.validator_ids": {
+    "description": "The ids of the validators.",
+    "privacy": "Public",
+    "value": [
+      "0x64"
+    ]
+  },
   "consensus_manager_config.context_config.proposal_buffer_size": {
     "description": "The buffer size for streaming outbound proposals.",
     "privacy": "Public",
