@@ -150,6 +150,9 @@
   "consensus_manager_config.context_config.block_timestamp_window": 1,
   "consensus_manager_config.context_config.l1_da_mode": true,
   "consensus_manager_config.context_config.num_validators": 1,
+  "consensus_manager_config.context_config.validator_ids": [
+    "0x64"
+  ],
   "consensus_manager_config.immediate_active_height": 1,
   "consensus_manager_config.network_config.advertised_multiaddr": "",
   "consensus_manager_config.network_config.advertised_multiaddr.#is_none": true,

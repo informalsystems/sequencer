@@ -14,7 +14,7 @@ use papyrus_network::network_manager::{
     GenericReceiver,
 };
 use papyrus_network_types::network_types::BroadcastedMessageMetadata;
-use papyrus_protobuf::consensus::{ProposalFin, ProposalInit, Vote};
+use papyrus_protobuf::consensus::{ProposalFin, ProposalInit, Vote, DEFAULT_VALIDATOR_ID_STR};
 use papyrus_protobuf::converters::ProtobufConversionError;
 use serde::{Deserialize, Serialize};
 use starknet_api::block::{BlockHash, BlockNumber};
@@ -38,6 +38,8 @@ pub struct ContextConfig {
     pub batcher_build_buffer: usize,
     /// The number of validators.
     pub num_validators: u64,
+    /// The IDs of the validators.
+    pub validator_ids: Vec<String>,
     /// The chain id of the Starknet chain.
     pub chain_id: ChainId,
     /// Maximum allowed deviation (seconds) of a proposed block's timestamp from the current time.
@@ -59,6 +61,12 @@ impl SerializeConfig for ContextConfig {
                 "num_validators",
                 &self.num_validators,
                 "The number of validators.",
+                ParamPrivacyInput::Public,
+            ),
+            ser_param(
+                "validator_ids",
+                &self.validator_ids,
+                "The IDs of the validators.",
                 ParamPrivacyInput::Public,
             ),
             ser_param(
@@ -89,6 +97,7 @@ impl Default for ContextConfig {
         Self {
             batcher_build_buffer: 100,
             num_validators: 1,
+            validator_ids: vec![DEFAULT_VALIDATOR_ID_STR.to_string()],
             chain_id: ChainId::Mainnet,
             block_timestamp_window: 1,
             l1_da_mode: true,

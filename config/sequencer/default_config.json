@@ -804,6 +804,13 @@
     "privacy": "Public",
     "value": 1
   },
+  "consensus_manager_config.context_config.validator_ids": {
+    "description": "The ids of the validators.",
+    "privacy": "Public",
+    "value": [
+      "0x64"
+    ]
+  },
   "consensus_manager_config.immediate_active_height": {
     "description": "The height at which the node may actively participate in consensus.",
     "privacy": "Public",
