@@ -47,7 +47,7 @@ pub enum InvalidValidationStatus {
 pub enum L1ProviderRequest {
     AddEvents(Vec<Event>),
     CommitBlock {
-        l1_handler_tx_hashes: Vec<TransactionHash>,
+        l1_handler_tx_hashes: IndexSet<TransactionHash>,
         rejected_tx_hashes: IndexSet<TransactionHash>,
         height: BlockNumber,
     },
@@ -103,7 +103,7 @@ pub trait L1ProviderClient: Send + Sync {
 
     async fn commit_block(
         &self,
-        l1_handler_consumed_tx_hashes: Vec<TransactionHash>,
+        l1_handler_consumed_tx_hashes: IndexSet<TransactionHash>,
         l1_handler_rejected_tx_hashes: IndexSet<TransactionHash>,
         height: BlockNumber,
     ) -> L1ProviderClientResult<()>;
@@ -166,7 +166,7 @@ where
 
     async fn commit_block(
         &self,
-        l1_handler_tx_hashes: Vec<TransactionHash>,
+        l1_handler_tx_hashes: IndexSet<TransactionHash>,
         rejected_tx_hashes: IndexSet<TransactionHash>,
         height: BlockNumber,
     ) -> L1ProviderClientResult<()> {
