@@ -11,60 +11,32 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use futures::channel::{mpsc, oneshot};
-use futures::{FutureExt, SinkExt, StreamExt};
+use futures::{SinkExt, StreamExt};
 use papyrus_network::network_manager::{BroadcastTopicClient, BroadcastTopicClientTrait};
 use papyrus_protobuf::consensus::{
-    BlockInfo as ConsensusBlockInfo,
-    HeightAndRound,
-    ProposalFin,
-    ProposalInit,
-    ProposalPart,
-    TransactionBatch,
-    Vote,
-    DEFAULT_VALIDATOR_ID,
+    BlockInfo as ConsensusBlockInfo, HeightAndRound, ProposalFin, ProposalInit, ProposalPart,
+    TransactionBatch, Vote,
 };
 use starknet_api::block::{
-    BlockHash,
-    BlockHashAndNumber,
-    BlockHeaderWithoutHash,
-    BlockNumber,
-    BlockTimestamp,
-    GasPrice,
-    GasPricePerToken,
-    GasPriceVector,
-    GasPrices,
-    NonzeroGasPrice,
+    BlockHash, BlockHashAndNumber, BlockHeaderWithoutHash, BlockNumber, BlockTimestamp, GasPrice,
+    GasPricePerToken, GasPriceVector, GasPrices, NonzeroGasPrice,
 };
 use starknet_api::consensus_transaction::InternalConsensusTransaction;
 use starknet_api::core::{ContractAddress, SequencerContractAddress};
 use starknet_api::data_availability::L1DataAvailabilityMode;
 use starknet_api::transaction::TransactionHash;
 use starknet_batcher_types::batcher_types::{
-    DecisionReachedInput,
-    DecisionReachedResponse,
-    GetProposalContent,
-    GetProposalContentInput,
-    ProposalId,
-    ProposalStatus,
-    ProposeBlockInput,
-    SendProposalContent,
-    SendProposalContentInput,
-    StartHeightInput,
-    ValidateBlockInput,
+    DecisionReachedInput, DecisionReachedResponse, GetProposalContent, GetProposalContentInput,
+    ProposalId, ProposalStatus, ProposeBlockInput, SendProposalContent, SendProposalContentInput,
+    StartHeightInput, ValidateBlockInput,
 };
 use starknet_batcher_types::communication::{BatcherClient, BatcherClientResult};
-use starknet_class_manager_types::transaction_converter::{
-    TransactionConverter,
-    TransactionConverterTrait,
-};
 use starknet_class_manager_types::SharedClassManagerClient;
+use starknet_class_manager_types::transaction_converter::{
+    TransactionConverter, TransactionConverterTrait,
+};
 use starknet_consensus::types::{
-    ConsensusContext,
-    ConsensusError,
-    ContextConfig,
-    ProposalCommitment,
-    Round,
-    ValidatorId,
+    ConsensusContext, ConsensusError, ContextConfig, ProposalCommitment, Round, ValidatorId,
 };
 use starknet_state_sync_types::communication::SharedStateSyncClient;
 use starknet_state_sync_types::state_sync_types::SyncBlock;
@@ -73,7 +45,7 @@ use tokio::task::JoinHandle;
 use tokio::time::Instant;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::AbortOnDropHandle;
-use tracing::{debug, error, error_span, info, instrument, trace, warn, Instrument};
+use tracing::{Instrument, debug, error, error_span, info, instrument, trace, warn};
 
 use crate::cende::{BlobParameters, CendeContext};
 use crate::fee_market::calculate_next_base_gas_price;
@@ -692,7 +664,7 @@ async fn get_proposal_content(
     proposal_id: ProposalId,
     batcher: &dyn BatcherClient,
     mut proposal_sender: mpsc::Sender<ProposalPart>,
-    cende_write_success: AbortOnDropHandle<bool>,
+    _cende_write_success: AbortOnDropHandle<bool>,
     transaction_converter: &TransactionConverter,
 ) -> Option<(ProposalCommitment, Vec<InternalConsensusTransaction>)> {
     let mut content = Vec::new();
