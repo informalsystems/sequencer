@@ -1,7 +1,10 @@
+#![allow(dead_code, unused_variables)]
+
 #[cfg(test)]
 #[path = "consensus_manager_test.rs"]
 mod consensus_manager_test;
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use apollo_reverts::revert_blocks_and_eternal_pending;
@@ -11,7 +14,8 @@ use papyrus_network::network_manager::metrics::{BroadcastNetworkMetrics, Network
 use papyrus_network::network_manager::{BroadcastTopicChannels, NetworkManager};
 use papyrus_protobuf::consensus::{HeightAndRound, ProposalPart, StreamMessage, Vote};
 use starknet_api::block::BlockNumber;
-use starknet_batcher_types::batcher_types::RevertBlockInput;
+use starknet_api::consensus_transaction::InternalConsensusTransaction;
+use starknet_batcher_types::batcher_types::{ProposalId, RevertBlockInput};
 use starknet_batcher_types::communication::SharedBatcherClient;
 use starknet_class_manager_types::SharedClassManagerClient;
 use starknet_consensus::stream_handler::StreamHandler;
@@ -22,14 +26,15 @@ use starknet_infra_utils::type_name::short_type_name;
 use starknet_sequencer_infra::component_definitions::ComponentStarter;
 use starknet_sequencer_infra::errors::ComponentError;
 use starknet_sequencer_metrics::metric_definitions::{
-    CONSENSUS_NUM_CONNECTED_PEERS,
-    CONSENSUS_NUM_RECEIVED_MESSAGES,
-    CONSENSUS_NUM_SENT_MESSAGES,
+    CONSENSUS_NUM_CONNECTED_PEERS, CONSENSUS_NUM_RECEIVED_MESSAGES, CONSENSUS_NUM_SENT_MESSAGES,
 };
 use starknet_state_sync_types::communication::SharedStateSyncClient;
+use tokio::sync::Mutex;
+use tokio::time;
 use tracing::{error, info};
 
 use crate::config::ConsensusManagerConfig;
+use crate::fixtures::Prng;
 
 #[derive(Clone)]
 pub struct ConsensusManager {
@@ -42,26 +47,83 @@ pub struct ConsensusManager {
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use starknet_batcher_types::batcher_types::{
-    CentralObjects,
-    DecisionReachedInput,
-    DecisionReachedResponse,
-    GetHeightResponse,
-    GetProposalContent,
-    GetProposalContentInput,
-    GetProposalContentResponse,
-    ProposalStatus,
-    ProposeBlockInput,
-    SendProposalContent,
-    SendProposalContentInput,
-    SendProposalContentResponse,
-    StartHeightInput,
-    ValidateBlockInput,
+    CentralObjects, DecisionReachedInput, DecisionReachedResponse, GetHeightResponse,
+    GetProposalContent, GetProposalContentInput, GetProposalContentResponse, ProposalStatus,
+    ProposeBlockInput, SendProposalContent, SendProposalContentInput, SendProposalContentResponse,
+    StartHeightInput, ValidateBlockInput,
 };
 use starknet_batcher_types::communication::{BatcherClient, BatcherClientResult};
 use starknet_state_sync_types::state_sync_types::SyncBlock;
 
+#[derive(Debug)]
+pub struct MockProposalPart {
+    txes: Vec<InternalConsensusTransaction>,
+}
+
+impl MockProposalPart {
+    pub fn new(txes: Vec<InternalConsensusTransaction>) -> Self {
+        Self { txes }
+    }
+
+    pub fn len(&self) -> usize {
+        self.txes.len()
+    }
+}
+
+#[derive(Debug)]
+pub struct ProposalState {
+    pub height: BlockNumber,
+    pub proposal_id: ProposalId,
+    pub parts: Vec<MockProposalPart>,
+}
+
+impl ProposalState {
+    pub fn empty(height: BlockNumber, proposal_id: ProposalId) -> Self {
+        Self::with_parts(height, proposal_id, 0)
+    }
+
+    pub fn with_parts(height: BlockNumber, proposal_id: ProposalId, count: usize) -> Self {
+        use crate::fixtures::GenTxs;
+
+        Self {
+            height,
+            proposal_id,
+            parts: (0..count)
+                .map(|i| {
+                    let mut rng = init_prng(height, proposal_id, i as u64);
+                    MockProposalPart::new(GenTxs::large().gen(&mut rng))
+                })
+                .collect(),
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.parts.len()
+    }
+}
+
+fn init_prng(height: BlockNumber, proposal_id: ProposalId, count: u64) -> Prng {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    let mut hasher = DefaultHasher::new();
+    (height, proposal_id, count).hash(&mut hasher);
+
+    Prng::new(hasher.finish())
+}
+
 pub struct MockBatcherClient {
     pub height: AtomicU64,
+    pub parts: usize,
+    pub proposals: Mutex<HashMap<ProposalId, ProposalState>>,
+}
+
+impl MockBatcherClient {
+    const DEFAULT_PARTS: usize = 3;
+
+    pub fn new(height: AtomicU64) -> Self {
+        Self { height, parts: Self::DEFAULT_PARTS, proposals: Default::default() }
+    }
 }
 
 #[async_trait]
@@ -78,7 +140,26 @@ impl BatcherClient for MockBatcherClient {
         &self,
         input: GetProposalContentInput,
     ) -> BatcherClientResult<GetProposalContentResponse> {
-        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+        info!("XXXX: Get proposal content for proposal id: {:?}", input.proposal_id);
+
+        let mut proposals = self.proposals.lock().await;
+
+        let height = self.get_height().await?.height;
+
+        let proposal = proposals
+            .entry(input.proposal_id)
+            .or_insert_with(|| ProposalState::with_parts(height, input.proposal_id, self.parts));
+
+        info!("XXXX: Proposal state: {} parts", proposal.len());
+
+        if let Some(part) = proposal.parts.pop() {
+            info!("XXXX: Proposal part: {} txes", part.len());
+
+            time::sleep(time::Duration::from_millis(200)).await;
+
+            return Ok(GetProposalContentResponse { content: GetProposalContent::Txs(part.txes) });
+        }
+
         Ok(GetProposalContentResponse { content: GetProposalContent::Finished(Default::default()) })
     }
 
@@ -128,7 +209,7 @@ impl BatcherClient for MockBatcherClient {
     }
 
     async fn revert_block(&self, input: RevertBlockInput) -> BatcherClientResult<()> {
-        self.height.compare_exchange(
+        let _ = self.height.compare_exchange(
             input.height.0,
             input.height.0 - 1,
             Ordering::Relaxed,
@@ -145,17 +226,19 @@ impl ConsensusManager {
         state_sync_client: SharedStateSyncClient,
         class_manager_client: SharedClassManagerClient,
     ) -> Self {
-        let batcher_client = Arc::new(MockBatcherClient { height: AtomicU64::new(0) });
+        let batcher_client = Arc::new(MockBatcherClient::new(AtomicU64::new(0)));
         Self { config, batcher_client, state_sync_client, class_manager_client }
     }
 
     pub async fn run(&self) -> Result<(), ConsensusError> {
         // Sleep to let sync advance and not reach a race condition where sync returns None to
         // consensus even though the block exists in the network
-        tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+        time::sleep(time::Duration::from_secs(5)).await;
         let height =
             self.state_sync_client.get_latest_block_number().await.unwrap().unwrap_or_default();
-        self.batcher_client.start_height(StartHeightInput { height }).await;
+
+        let _ = self.batcher_client.start_height(StartHeightInput { height }).await;
+
         if self.config.revert_config.should_revert {
             self.revert_batcher_blocks(self.config.revert_config.revert_up_to_and_including).await;
         }
