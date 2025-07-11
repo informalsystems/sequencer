@@ -204,6 +204,7 @@ pub(crate) fn update_config_map(
         SerializationType::NegativeInteger => new_value.is_number(),
         SerializationType::PositiveInteger => new_value.is_number(),
         SerializationType::String => new_value.is_string(),
+        SerializationType::Array => new_value.is_array(),
     };
     if !is_type_matched {
         return Err(ConfigError::ChangeRequiredParamType {

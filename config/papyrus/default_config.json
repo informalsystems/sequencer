@@ -154,6 +154,13 @@
     "privacy": "Public",
     "value": 1
   },
+  "context.validator_ids": {
+    "description": "The ids of the validators.",
+    "privacy": "Public",
+    "value": [
+      "0x64"
+    ]
+  },
   "monitoring_gateway.collect_metrics": {
     "description": "If true, collect and return metrics in the monitoring gateway.",
     "pointer_target": "collect_metrics",

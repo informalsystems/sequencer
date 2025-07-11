@@ -120,6 +120,8 @@ struct PapyrusArgs {
     base_layer_node_url: String,
     #[arg(long = "num_validators")]
     num_validators: usize,
+    #[arg(long = "validator_ids")]
+    validator_ids: Vec<String>,
     #[arg(long = "db_dir", help = "Directory with existing DBs that this simulation can reuse.")]
     db_dir: Option<String>,
     #[arg(long = "proposal_timeout", help = "The timeout (seconds) for a proposal.")]
