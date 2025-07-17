@@ -289,3 +289,7 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage_nightly)'] }
 
 [workspace.lints.clippy]
 as_conversions = "warn"
+
+[profile.dev]
+debug = "line-tables-only"
+

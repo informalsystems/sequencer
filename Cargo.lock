@@ -11049,6 +11049,7 @@ dependencies = [
  "papyrus_protobuf",
  "rstest",
  "serde",
+ "starknet-types-core",
  "starknet_api",
  "starknet_batcher_types",
  "starknet_class_manager_types",
