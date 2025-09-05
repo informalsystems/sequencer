@@ -302,7 +302,7 @@ impl SequencerNodeConfig {
     pub fn load_and_process(args: Vec<String>) -> Result<Self, ConfigError> {
         let config_file_name = &resolve_project_relative_path(CONFIG_SCHEMA_PATH)?;
         let default_config_file = File::open(config_file_name)?;
-        load_and_process_config(default_config_file, node_command(), args, true)
+        load_and_process_config(default_config_file, node_command(), args, false)
     }
 
     pub fn validate_node_config(&self) -> Result<(), ConfigError> {
